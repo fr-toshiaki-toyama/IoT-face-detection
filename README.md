@@ -1,8 +1,10 @@
 ## Dependencies
 - cv2 (python)
-  - For OS X
+  - OS X
     - `brew tap homebrew/science`
     - `brew install opencv`
+  - Ubuntu
+    - `apt-get install python-opencv`   
 - pygame (python)
   - `pip install pygame`
 
