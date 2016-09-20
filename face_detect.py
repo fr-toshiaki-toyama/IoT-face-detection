@@ -70,18 +70,14 @@ def detect_faces(image):
             images=[]
             labels=[]
             print "Training"
-            cv2.imwrite("images/" + str(FACE_COUNT) + ".jpeg", image[y: y + h, x: x + w])
+            image_path = "images/" + str(FACE_COUNT) + ".jpeg"
+            cv2.imwrite(image_path, image[y: y + h, x: x + w])
             FACE_COUNT = FACE_COUNT + 1
-            image_paths = [os.path.join(IMAGE_FOLDER_PATH, f) for f in os.listdir(IMAGE_FOLDER_PATH)]
-            for image_path in image_paths:
-                image_pil = Image.open(image_path).convert('L')
-                image_set = np.array(image_pil, 'uint8')
-                nbr = os.path.split(image_path)[1].split(".")[0]
-                nbr = int(os.path.split(nbr)[1].split("/")[0])
-                images.append(image_set)
-                labels.append(nbr)
-            print np.array(labels)
-            RECOGNIZER.train(images, np.array(labels))
+            nbr = os.path.split(image_path)[1].split(".")[0]
+            nbr = int(os.path.split(nbr)[1].split("/")[0])
+            images.append(cv2.cvtColor(image[y: y + h, x: x + w], cv2.COLOR_BGR2GRAY))
+            labels.append(nbr)
+            RECOGNIZER.update(images, np.array(labels))
         cv2.rectangle(image, (x, y), (x+w, y+h), (0, 255, 0), 2)
         roi_gray = gray[y:y+h, x:x+w]
         roi_color = image[y:y+h, x:x+w]
@@ -90,6 +86,8 @@ def detect_faces(image):
         for (ex, ey, ew, eh) in eyes:
             cv2.rectangle(roi_color, (ex, ey), (ex+ew, ey+eh), (0, 255, 0), 2)
     return image
+
+## To train with local images if any
 def trainwith_existing_images():
     global FACE_COUNT
     images=[]
@@ -105,6 +103,7 @@ def trainwith_existing_images():
             images.append(image_set)
             labels.append(nbr)
         RECOGNIZER.train(images, np.array(labels))
+
 trainwith_existing_images()
 start_webcam(mirror=True)
 
