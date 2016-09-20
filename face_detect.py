@@ -14,6 +14,8 @@ EYE_CASCADE = cv2.CascadeClassifier(EYE_CASCADE_PATH)
 SUCCESS_SOUND = DATA_PATH + 'hello.wav'
 INTERVAL_IN_SECS = 0.2
 IMAGES = []
+FACE_COUNT = 1
+
 recognizer = cv2.createLBPHFaceRecognizer()
 path="images/"
 
@@ -35,6 +37,7 @@ def start_webcam(mirror=False):
     cv2.destroyAllWindows()
 
 def detect_faces(image):
+    global FACE_COUNT
     """Facial feature detection per frame"""
     # RGB to gray bands
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
@@ -68,13 +71,14 @@ def detect_faces(image):
             images=[]
             labels=[]
             print "Training"
-            cv2.imwrite("images/" + str(time.time()) + ".jpeg", image[y: y + h, x: x + w])
+            cv2.imwrite("images/" + str(FACE_COUNT) + ".jpeg", image[y: y + h, x: x + w])
+            FACE_COUNT = FACE_COUNT + 1
             image_paths = [os.path.join(path, f) for f in os.listdir(path)]
             for image_path in image_paths:
                 print image_path
                 image_pil = Image.open(image_path).convert('L')
                 image_set = np.array(image_pil, 'uint8')
-                nbr = os.path.split(image_path)[1].split(".")[0]+os.path.split(image_path)[1].split(".")[1]
+                nbr = os.path.split(image_path)[1].split(".")[0]
                 nbr = int(os.path.split(nbr)[1].split("/")[0])
                 images.append(image_set)
                 labels.append(nbr)
@@ -88,9 +92,21 @@ def detect_faces(image):
         for (ex, ey, ew, eh) in eyes:
             cv2.rectangle(roi_color, (ex, ey), (ex+ew, ey+eh), (0, 255, 0), 2)
     return image
-
-image_paths = [os.path.join(path, f) for f in os.listdir(path)]
-#if len(image_paths) >0 :
-#    print image_paths
+def trainwith_existing_images():
+    global FACE_COUNT
+    images=[]
+    labels=[]
+    image_paths = [os.path.join(path, f) for f in os.listdir(path)]
+    if len(image_paths) >0 :
+        FACE_COUNT = len(image_paths)
+        for image_path in image_paths:
+            image_pil = Image.open(image_path).convert('L')
+            image_set = np.array(image_pil, 'uint8')
+            nbr = os.path.split(image_path)[1].split(".")[0]
+            nbr = int(os.path.split(nbr)[1].split("/")[0])
+            images.append(image_set)
+            labels.append(nbr)
+        recognizer.train(images, np.array(labels))
+trainwith_existing_images()
 start_webcam(mirror=True)
 
