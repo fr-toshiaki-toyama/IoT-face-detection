@@ -2,6 +2,10 @@
 import time
 import cv2
 import pygame
+import numpy as np
+import os
+import Image
+from PIL import Image
 
 DATA_PATH = './data/'
 FACE_CASCADE_PATH = DATA_PATH + 'haar_face.xml'
@@ -10,6 +14,9 @@ FACE_CASCADE = cv2.CascadeClassifier(FACE_CASCADE_PATH)
 EYE_CASCADE = cv2.CascadeClassifier(EYE_CASCADE_PATH)
 SUCCESS_SOUND = DATA_PATH + 'hello.wav'
 INTERVAL_IN_SECS = 0.2
+IMAGES = []
+recognizer = cv2.createLBPHFaceRecognizer()
+path="images/"
 
 def start_webcam(mirror=False):
     """Start capture on webcam"""
@@ -50,8 +57,31 @@ def detect_faces(image):
 
     # Draw a rectangle around the faces
     for (x, y, w, h) in faces:
+        try:
+            print "Performing Image Prediction"
+            img , score = recognizer.predict(cv2.cvtColor(image[y: y + h, x: x + w], cv2.COLOR_BGR2GRAY))
+            if score > 200:
+                print "Match ignoring due to huge difference",score
+                sys.exit(1)
+            else:
+                print "Match Found"
+        except:
+            images=[]
+            labels=[]
+            print "Training"
+            cv2.imwrite("images/" + str(time.time()) + ".jpeg", image[y: y + h, x: x + w])
+            image_paths = [os.path.join(path, f) for f in os.listdir(path)]
+            for image_path in image_paths:
+                print image_path
+                image_pil = Image.open(image_path).convert('L')
+                image_set = np.array(image_pil, 'uint8')
+                nbr = os.path.split(image_path)[1].split(".")[0]+os.path.split(image_path)[1].split(".")[1]
+                nbr = int(os.path.split(nbr)[1].split("/")[0])
+                images.append(image_set)
+                labels.append(nbr)
+            print np.array(labels)
+            recognizer.train(images, np.array(labels))
         cv2.rectangle(image, (x, y), (x+w, y+h), (0, 255, 0), 2)
-        # Image subset
         roi_gray = gray[y:y+h, x:x+w]
         roi_color = image[y:y+h, x:x+w]
         # Detect and draw rectangle around eyes
@@ -60,4 +90,8 @@ def detect_faces(image):
             cv2.rectangle(roi_color, (ex, ey), (ex+ew, ey+eh), (0, 255, 0), 2)
     return image
 
+image_paths = [os.path.join(path, f) for f in os.listdir(path)]
+#if len(image_paths) >0 :
+#    print image_paths
 start_webcam(mirror=True)
+
