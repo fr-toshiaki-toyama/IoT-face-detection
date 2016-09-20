@@ -16,7 +16,8 @@ INTERVAL_IN_SECS = 0.2
 IMAGES = []
 FACE_COUNT = 1
 RECOGNIZER = cv2.createLBPHFaceRecognizer()
-IMAGE_FOLDER_PATH="images/"
+IMAGE_FOLDER_PATH = 'images/'
+THRESHOLD_MATCHING_SCORE = 200
 
 def start_webcam(mirror=False):
     """Start capture on webcam"""
@@ -61,22 +62,17 @@ def detect_faces(image):
         try:
             print "Performing Image Prediction"
             img , score = RECOGNIZER.predict(cv2.cvtColor(image[y: y + h, x: x + w], cv2.COLOR_BGR2GRAY))
-            if score > 200:
+            if score > THRESHOLD_MATCHING_SCORE:
                 print "Match ignoring due to huge difference",score
                 sys.exit(1)
             else:
                 print "Match Found"
         except:
-            images=[]
-            labels=[]
             print "Training"
             image_path = "images/" + str(FACE_COUNT) + ".jpeg"
             cv2.imwrite(image_path, image[y: y + h, x: x + w])
             FACE_COUNT = FACE_COUNT + 1
-            nbr = os.path.split(image_path)[1].split(".")[0]
-            nbr = int(os.path.split(nbr)[1].split("/")[0])
-            images.append(cv2.cvtColor(image[y: y + h, x: x + w], cv2.COLOR_BGR2GRAY))
-            labels.append(nbr)
+            images, labels = prepare_image_path_arrays([image_path])
             RECOGNIZER.update(images, np.array(labels))
         cv2.rectangle(image, (x, y), (x+w, y+h), (0, 255, 0), 2)
         roi_gray = gray[y:y+h, x:x+w]
@@ -90,19 +86,25 @@ def detect_faces(image):
 ## To train with local images if any
 def trainwith_existing_images():
     global FACE_COUNT
-    images=[]
-    labels=[]
     image_paths = [os.path.join(IMAGE_FOLDER_PATH, f) for f in os.listdir(IMAGE_FOLDER_PATH)]
     if len(image_paths) >0 :
         FACE_COUNT = len(image_paths)
-        for image_path in image_paths:
+        images, labels = prepare_image_path_arrays(image_paths)
+        RECOGNIZER.train(images, labels)
+        
+#Preparing image path arrays for traing
+def prepare_image_path_arrays(image_paths=[]):
+    images=[]
+    labels=[]
+    for image_path in image_paths:
             image_pil = Image.open(image_path).convert('L')
             image_set = np.array(image_pil, 'uint8')
             nbr = os.path.split(image_path)[1].split(".")[0]
             nbr = int(os.path.split(nbr)[1].split("/")[0])
             images.append(image_set)
             labels.append(nbr)
-        RECOGNIZER.train(images, np.array(labels))
+    return images, np.array(labels)
+
 
 trainwith_existing_images()
 start_webcam(mirror=True)
