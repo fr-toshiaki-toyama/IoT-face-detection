@@ -61,12 +61,19 @@ def detect_faces(image):
     for (x, y, w, h) in faces:
         try:
             print "Performing Image Prediction"
-            img , score = RECOGNIZER.predict(cv2.cvtColor(image[y: y + h, x: x + w], cv2.COLOR_BGR2GRAY))
+            img_label , score = RECOGNIZER.predict(cv2.cvtColor(image[y: y + h, x: x + w], cv2.COLOR_BGR2GRAY))
             if score > THRESHOLD_MATCHING_SCORE:
                 print "Match ignoring due to huge difference",score
                 sys.exit(1)
+            elif score < 100 and score > 50:
+                print "Match Found and adding to traing model"
+                print img_label, score
+                image_path = "images/" + str(img_label) + '.' +  str(time.time()) + ".jpeg"
+                cv2.imwrite(image_path, image[y: y + h, x: x + w])
+                images, labels = prepare_image_path_arrays([image_path])
+                RECOGNIZER.update(images, np.array(labels))
             else:
-                print "Match Found"
+                print "Match Found"               
         except:
             print "Training"
             image_path = "images/" + str(FACE_COUNT) + ".jpeg"
