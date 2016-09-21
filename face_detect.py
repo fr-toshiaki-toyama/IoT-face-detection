@@ -19,6 +19,7 @@ RECOGNIZER = cv2.createLBPHFaceRecognizer()
 IMAGE_FOLDER_PATH = 'images/'
 THRESHOLD_MATCHING_SCORE = 200
 
+
 def start_webcam(mirror=False):
     """Start capture on webcam"""
     cam = cv2.VideoCapture(0)
@@ -35,6 +36,7 @@ def start_webcam(mirror=False):
             break
         time.sleep(INTERVAL_IN_SECS)
     cv2.destroyAllWindows()
+
 
 def detect_faces(image):
     global FACE_COUNT
@@ -61,58 +63,59 @@ def detect_faces(image):
     for (x, y, w, h) in faces:
         try:
             print "Performing Image Prediction"
-            img_label , score = RECOGNIZER.predict(cv2.cvtColor(image[y: y + h, x: x + w], cv2.COLOR_BGR2GRAY))
+            img_label, score = RECOGNIZER.predict(cv2.cvtColor(image[y: y + h, x: x + w], cv2.COLOR_BGR2GRAY))
             if score > THRESHOLD_MATCHING_SCORE:
-                print "Match ignoring due to huge difference",score
+                print "Match ignoring due to huge difference", score
                 sys.exit(1)
             elif score < 100 and score > 50:
                 print "Match Found and adding to traing model"
                 print img_label, score
-                image_path = "images/" + str(img_label) + '.' +  str(time.time()) + ".jpeg"
+                image_path = "images/" + str(img_label) + '.' + str(time.time()) + ".jpeg"
                 cv2.imwrite(image_path, image[y: y + h, x: x + w])
                 images, labels = prepare_image_path_arrays([image_path])
                 RECOGNIZER.update(images, np.array(labels))
             else:
-                print "Match Found"               
+                print "Match Found"
         except:
             print "Training"
             image_path = "images/" + str(FACE_COUNT) + ".jpeg"
             cv2.imwrite(image_path, image[y: y + h, x: x + w])
-            FACE_COUNT = FACE_COUNT + 1
+            FACE_COUNT += 1
             images, labels = prepare_image_path_arrays([image_path])
             RECOGNIZER.update(images, np.array(labels))
-        cv2.rectangle(image, (x, y), (x+w, y+h), (0, 255, 0), 2)
-        roi_gray = gray[y:y+h, x:x+w]
-        roi_color = image[y:y+h, x:x+w]
+        cv2.rectangle(image, (x, y), (x + w, y + h), (0, 255, 0), 2)
+        roi_gray = gray[y:y + h, x:x + w]
+        roi_color = image[y:y + h, x:x + w]
         # Detect and draw rectangle around eyes
         eyes = EYE_CASCADE.detectMultiScale(roi_gray)
         for (ex, ey, ew, eh) in eyes:
-            cv2.rectangle(roi_color, (ex, ey), (ex+ew, ey+eh), (0, 255, 0), 2)
+            cv2.rectangle(roi_color, (ex, ey), (ex + ew, ey + eh), (0, 255, 0), 2)
     return image
 
-## To train with local images if any
+
+# To train with local images if any
 def trainwith_existing_images():
     global FACE_COUNT
     image_paths = [os.path.join(IMAGE_FOLDER_PATH, f) for f in os.listdir(IMAGE_FOLDER_PATH)]
-    if len(image_paths) >0 :
+    if len(image_paths) > 0:
         FACE_COUNT = len(image_paths)
         images, labels = prepare_image_path_arrays(image_paths)
         RECOGNIZER.train(images, labels)
-        
-#Preparing image path arrays for traing
+
+
+# Preparing image path arrays for traing
 def prepare_image_path_arrays(image_paths=[]):
-    images=[]
-    labels=[]
+    images = []
+    labels = []
     for image_path in image_paths:
-            image_pil = Image.open(image_path).convert('L')
-            image_set = np.array(image_pil, 'uint8')
-            nbr = os.path.split(image_path)[1].split(".")[0]
-            nbr = int(os.path.split(nbr)[1].split("/")[0])
-            images.append(image_set)
-            labels.append(nbr)
+        image_pil = Image.open(image_path).convert('L')
+        image_set = np.array(image_pil, 'uint8')
+        nbr = os.path.split(image_path)[1].split(".")[0]
+        nbr = int(os.path.split(nbr)[1].split("/")[0])
+        images.append(image_set)
+        labels.append(nbr)
     return images, np.array(labels)
 
 
 trainwith_existing_images()
 start_webcam(mirror=True)
-
