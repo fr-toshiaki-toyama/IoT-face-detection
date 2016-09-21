@@ -23,9 +23,8 @@ THRESHOLD_MATCHING_SCORE = 200
 def start_webcam(mirror=False):
     """Start capture on webcam"""
     cam = cv2.VideoCapture(0)
-    # set framerate
+    # set frame rate
     cam.set(cv2.cv.CV_CAP_PROP_FPS, 0.1)
-
     while True:
         _, img = cam.read()
         img = detect_faces(img)
@@ -43,7 +42,6 @@ def detect_faces(image):
     """Facial feature detection per frame"""
     # RGB to gray bands
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-
     # Detect faces in the image
     faces = FACE_CASCADE.detectMultiScale(
         gray,
@@ -52,7 +50,6 @@ def detect_faces(image):
         minSize=(30, 30),
         flags=cv2.cv.CV_HAAR_SCALE_IMAGE
     )
-
     print "Detected {0} faces".format(len(faces))
     if len(faces) > 0:
         pygame.mixer.init()
@@ -94,7 +91,7 @@ def detect_faces(image):
 
 
 # To train with local images if any
-def trainwith_existing_images():
+def train_with_existing_images():
     global FACE_COUNT
     image_paths = [os.path.join(IMAGE_FOLDER_PATH, f) for f in os.listdir(IMAGE_FOLDER_PATH)]
     if len(image_paths) > 0:
@@ -117,5 +114,5 @@ def prepare_image_path_arrays(image_paths=[]):
     return images, np.array(labels)
 
 
-trainwith_existing_images()
+train_with_existing_images()
 start_webcam(mirror=True)
