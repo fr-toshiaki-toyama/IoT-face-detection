@@ -10,12 +10,10 @@ var trainResult = "gender.train";
 var imageWidth = 92;
 var imageHeight = 112;
 
-
 var camera = new cv.VideoCapture(0);
 var namedWindow = new cv.NamedWindow('Video', 0);
 var faceRecognizer = cv.FaceRecognizer.createFisherFaceRecognizer();
 faceRecognizer.loadSync(trainResult);
-
 
 /*
  * train should be done in another separate script
@@ -32,6 +30,7 @@ faceRecognizer.loadSync(trainResult);
  images/male/0.jpg;1
  images/male/1.jpg;1
  */
+
 var train = function() {
   var trainData = [];
   readline.createInterface({
@@ -44,8 +43,8 @@ var train = function() {
     var fisherFacesRecognizer = cv.FaceRecognizer.createFisherFaceRecognizer();
     fisherFacesRecognizer.trainSync(trainData);
     fisherFacesRecognizer.saveSync(trainResult);
-  })
-}
+  });
+};
 
 var readCamera = function(cb) {
   camera.read(function(err, image) {
@@ -53,17 +52,18 @@ var readCamera = function(cb) {
       console.log(err);
     }
     if (image.width() > 0 && image.height() > 0) {
-      cb(null, image)
+      var original = image.copy();
+      image.convertGrayscale();
+      cb(null, image, original);
     }
   });
-}
+};
 
 var crop = function(im, face, width, height) {
-
   var ratio = 1;
-  if( face.width > face.height ){
+  if (face.width > face.height) {
     ratio = width / face.width;
-  }else{
+  } else {
     ratio = height / face.height;
   }
 
@@ -73,12 +73,10 @@ var crop = function(im, face, width, height) {
   var roi = im.roi(x, y, face.width, face.height);
   roi = roi.copy();
   roi.resize(width, height, cv.INTER_CUBIC);
-  roi.convertGrayscale();
   return roi;
-
 };
 
-var detectFaces = function(image, cb) {
+var detectFaces = function(image, original, cb) {
   image.detectObject(cv.FACE_CASCADE, {}, function(err, faces) {
     if (err) {
       console.log(err);
@@ -91,19 +89,18 @@ var detectFaces = function(image, cb) {
       }
       var faceImg = crop(image, face, imageWidth, imageHeight);
       var prediction = faceRecognizer.predictSync(faceImg);
-      image.rectangle([face.x, face.y], [face.width, face.height], color);
-      if(prediction.id === 0) {
-        image.putText("Female", face.x + face.width / 3, face.y, null, color);
+      original.rectangle([face.x, face.y], [face.width, face.height], color);
+      if (prediction.id === 0) {
+        original.putText("Female", face.x + face.width / 3, face.y, null, color);
       } else {
-        image.putText("Male", face.x + face.width / 3, face.y, null, color);
+        original.putText("Male", face.x + face.width / 3, face.y, null, color);
       }
-      namedWindow.show(image);
-      namedWindow.blockingWaitKey(0, 20)
+      namedWindow.show(original);
+      namedWindow.blockingWaitKey(0, 20);
     }
-    cb(null)
+    cb(null);
   });
-}
-
+};
 
 async.forever(
   function(next) {
@@ -113,11 +110,10 @@ async.forever(
     ], function (err, result) {
       setTimeout(function() {
         next();
-      }, delay)
+      }, delay);
     });
   },
   function(err) {
     console.error(err);
   }
 );
-
