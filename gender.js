@@ -9,6 +9,9 @@ var trainImageCsv = "gender.csv";
 var trainResult = "gender.train";
 var imageWidth = 92;
 var imageHeight = 112;
+var downScale = 1; // 2 == 50% reduction in size
+var faceCascade = './data/haar_face.xml';
+// path for lighter cascade: './data/light_haar_face.xml'
 
 var camera = new cv.VideoCapture(0);
 var namedWindow = new cv.NamedWindow('Video', 0);
@@ -52,9 +55,10 @@ var readCamera = function(cb) {
       console.log(err);
     }
     if (image.width() > 0 && image.height() > 0) {
+      image.resize(image.width() / downScale, image.height() / downScale);
       var original = image.copy();
       image.convertGrayscale();
-      cb(null, image, original);
+      return cb(null, image, original);
     }
   });
 };
@@ -77,7 +81,7 @@ var crop = function(im, face, width, height) {
 };
 
 var detectFaces = function(image, original, cb) {
-  image.detectObject(cv.FACE_CASCADE, {}, function(err, faces) {
+  image.detectObject(faceCascade, {}, function(err, faces) {
     if (err) {
       console.log(err);
     }
@@ -98,7 +102,7 @@ var detectFaces = function(image, original, cb) {
       namedWindow.show(original);
       namedWindow.blockingWaitKey(0, 20);
     }
-    cb(null);
+    return cb(null);
   });
 };
 
