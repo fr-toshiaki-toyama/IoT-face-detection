@@ -6,7 +6,8 @@ var async = require("async");
 var delay = 20;
 var color = [0, 255, 0];
 var trainImageCsv = "gender.csv";
-var trainResult = "gender.train";
+var trainResultGender = "data/train.gender.fisher";
+var trainResultAge = "data/train.age.lbph";
 var imageWidth = 92;
 var imageHeight = 112;
 var downScale = 1; // 2 == 50% reduction in size
@@ -15,8 +16,10 @@ var faceCascade = './data/haar_face.xml';
 
 var camera = new cv.VideoCapture(0);
 var namedWindow = new cv.NamedWindow('Video', 0);
-var faceRecognizer = cv.FaceRecognizer.createFisherFaceRecognizer();
-faceRecognizer.loadSync(trainResult);
+var fisherFaceRecognizer = cv.FaceRecognizer.createFisherFaceRecognizer();
+fisherFaceRecognizer.loadSync(trainResultGender);
+var lbphFaceRecognizer = cv.FaceRecognizer.createLBPHFaceRecognizer();
+lbphFaceRecognizer.loadSync(trainResultAge);
 
 /*
  * train should be done in another separate script
@@ -45,7 +48,7 @@ var train = function() {
   }).on('close', function() {
     var fisherFacesRecognizer = cv.FaceRecognizer.createFisherFaceRecognizer();
     fisherFacesRecognizer.trainSync(trainData);
-    fisherFacesRecognizer.saveSync(trainResult);
+    fisherFacesRecognizer.saveSync(trainResultGender);
   });
 };
 
@@ -92,12 +95,13 @@ var detectFaces = function(image, original, cb) {
         continue;
       }
       var faceImg = crop(image, face, imageWidth, imageHeight);
-      var prediction = faceRecognizer.predictSync(faceImg);
+      var predictionGender = fisherFaceRecognizer.predictSync(faceImg);
+      var predictionAge = lbphFaceRecognizer.predictSync(faceImg);
       original.rectangle([face.x, face.y], [face.width, face.height], color);
-      if (prediction.id === 0) {
-        original.putText("Female", face.x + face.width / 3, face.y, null, color);
+      if (predictionGender.id === 0) {
+        original.putText("Female: " + predictionAge.id, face.x + face.width / 3, face.y, null, color);
       } else {
-        original.putText("Male", face.x + face.width / 3, face.y, null, color);
+        original.putText("Male: " + predictionAge.id, face.x + face.width / 3, face.y, null, color);
       }
       namedWindow.show(original);
       namedWindow.blockingWaitKey(0, 20);
