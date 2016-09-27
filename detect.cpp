@@ -73,25 +73,35 @@ void detectAndDisplay(
         Mat faceROI = frame_gray( faces[i] );
         resize(faceROI, faceROI, Size(imageWidth, imageHeight));
 
+        int labelG, labelA;
+        double confG, confA;
         g = (double)getTickCount();
-        int labelG = modelF->predict(faceROI);
+        modelF->predict(faceROI, labelG, confG);
         g = (double)getTickCount() - a;
         printf( "gender prediction time = %g ms\n", g*1000/getTickFrequency());
         a = (double)getTickCount();
-        int labelA = modelL->predict(faceROI);
+        modelL->predict(faceROI, labelA, confA);
         a = (double)getTickCount() - g;
         printf( "age prediction time = %g ms\n", a*1000/getTickFrequency());
-        string gender = "";
-        if (labelG == 0)
+        string gender = "-";
+        if (confG < 10)
         {
-            gender = "Female";
-        } else if (labelG == 1)
+            if (labelG == 0)
+            {
+                gender = "Female";
+            } else if (labelG == 1)
+            {
+                gender = "Male";
+            }
+        }
+        string age = "-";
+        if (confA < 100)
         {
-            gender = "Male";
+            age = to_string(labelA);
         }
         Point bottomleft( faces[i].x + faces[i].width/3, faces[i].y);
         putText(
-            frame, gender + '(' + to_string(labelA) + ')', bottomleft,
+            frame, gender + '(' + age + ')', bottomleft,
             FONT_HERSHEY_PLAIN, 3, CV_RGB(0, 255, 0)
         );
     }
