@@ -10,7 +10,8 @@ using namespace cv::face;
 using namespace std;
 
 //void detectAndDisplay( Mat frame );
-void detectAndDisplay( Mat frame, Ptr<FaceRecognizer> modelF, Ptr<LBPHFaceRecognizer> modelL);
+void detectAndDisplay(
+        Mat frame, Ptr<FaceRecognizer> modelF, Ptr<LBPHFaceRecognizer> modelL);
 
 String face_cascade_name = "./data/haar_face.xml";
 CascadeClassifier face_cascade;
@@ -52,7 +53,8 @@ int main( void )
     return 0;
 }
 
-void detectAndDisplay( Mat frame, Ptr<FaceRecognizer> modelF, Ptr<LBPHFaceRecognizer> modelL)
+void detectAndDisplay(
+        Mat frame, Ptr<FaceRecognizer> modelF, Ptr<LBPHFaceRecognizer> modelL)
 {
     double t = 0, a = 0, g = 0;
     vector<Rect> faces;
@@ -71,14 +73,14 @@ void detectAndDisplay( Mat frame, Ptr<FaceRecognizer> modelF, Ptr<LBPHFaceRecogn
         Mat faceROI = frame_gray( faces[i] );
         resize(faceROI, faceROI, Size(imageWidth, imageHeight));
 
-        a = (double)getTickCount();
-        int labelG = modelF->predict(faceROI);
-        a = (double)getTickCount() - a;
-        printf( "age prediction time = %g ms\n", a*1000/getTickFrequency());
         g = (double)getTickCount();
-        int labelA = modelL->predict(faceROI);
-        g = (double)getTickCount() - g;
+        int labelG = modelF->predict(faceROI);
+        g = (double)getTickCount() - a;
         printf( "gender prediction time = %g ms\n", g*1000/getTickFrequency());
+        a = (double)getTickCount();
+        int labelA = modelL->predict(faceROI);
+        a = (double)getTickCount() - g;
+        printf( "age prediction time = %g ms\n", a*1000/getTickFrequency());
         string gender = "";
         if (labelG == 0)
         {
@@ -89,7 +91,8 @@ void detectAndDisplay( Mat frame, Ptr<FaceRecognizer> modelF, Ptr<LBPHFaceRecogn
         }
         Point bottomleft( faces[i].x + faces[i].width/3, faces[i].y);
         putText(
-            frame, gender + to_string(labelA), bottomleft, FONT_HERSHEY_PLAIN, 3, CV_RGB(0, 255, 0)
+            frame, gender + '(' + to_string(labelA) + ')', bottomleft,
+            FONT_HERSHEY_PLAIN, 3, CV_RGB(0, 255, 0)
         );
     }
     imshow( window_name, frame );
