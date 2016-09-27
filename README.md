@@ -18,9 +18,18 @@
     ln -s /usr/local/Cellar/opencv/2.4.13_3/lib/python2.7/site-packages/cv2.so cv2.so
     ```
   - Ubuntu
-    - `$ apt-get install python-opencv` 
+    - `$ apt-get install python-opencv`
     - `$ pip install -r requirements.txt`
 
 ## Source of detectors:
 - Rainer Lienhart (face)
 - Modesto Castrillon-Santana (eyes)
+
+## Running
+- Python
+  - python face_detect.py
+- Node.js
+  - node detect.js
+- C++
+  - g++ -ggdb `pkg-config --cflags --libs opencv` detect.cpp -o detect.o
+  - ./detect.o
